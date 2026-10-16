@@ -20,7 +20,7 @@ from .api import EdulogClient
 from .const import CONF_PASSWORD, CONF_TENANT_ID, CONF_TENANT_NAME, DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.DEVICE_TRACKER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

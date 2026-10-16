@@ -46,6 +46,26 @@ Each followed bus gets devices under the district containing:
 - `… / Bearing to watch location` — degrees
 - `… / Arriving` — binary sensor on when the bus is inside the threshold
   (unknown rather than off when there's no fresh fix)
+- `… / GPS` — the bus on HA's map (a `device_tracker`; state is
+  `home` / `not_home` / the name of any zone the bus is inside)
+
+### Your bus on the map
+
+```yaml
+# any dashboard, add a card
+type: map
+entities:
+  - device_tracker.m14_gps           # one per followed bus
+  - device_tracker.fram_m31_gps
+```
+
+The icon plots wherever the bus's latest fresh fix is. Buses without a
+recent fix disappear from the map (state `unknown`) rather than sitting
+at a stale position. Want arrival semantics at a *place* instead of a
+distance? Create a [zone](https://www.home-assistant.io/integrations/zone)
+around the school or your street with a ~150–300 m radius — the tracker's
+state changes to that zone's name while the bus is inside it, which makes
+a clean automation trigger.
 
 ### "Bus is close to arrival" notification
 
