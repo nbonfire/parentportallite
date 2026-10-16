@@ -14,20 +14,14 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-try:
-    from homeassistant.helpers.entity import AddEntities
-except ImportError:  # HA <= 2024.11
-    from homeassistant.helpers.entity_platform import (
-        AddEntitiesCallback as AddEntities,
-    )
-
-from .const import CONF_TENANT_ID, DOMAIN
+from .const import DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntities
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     coordinator: EdulogDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
@@ -54,12 +48,14 @@ class EdulogBusNearSensor(BinarySensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.vehicle["vehicleId"])},
-            name=self.vehicle["name"],
-            manufacturer="KarrosTech",
-            via_device=(DOMAIN, self.coordinator.config_entry.data[CONF_TENANT_ID]),
-        )
+        info: DeviceInfo = {
+            "identifiers": {(DOMAIN, self.vehicle["vehicleId"])},
+            "name": self.vehicle["name"],
+            "manufacturer": "KarrosTech",
+        }
+        if self.coordinator.via_device_id:
+            info["via_device_id"] = self.coordinator.via_device_id
+        return info
 
     @property
     def available(self) -> bool:

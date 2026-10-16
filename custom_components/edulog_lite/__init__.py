@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
 from .api import EdulogClient
-from .const import CONF_TENANT_ID, CONF_TENANT_NAME, DOMAIN
+from .const import CONF_PASSWORD, CONF_TENANT_ID, CONF_TENANT_NAME, DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -32,13 +32,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # District "device": parents pick this in the config flow, buses attach
     # to it via via_device so the UI groups everything under the district.
     device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
+    district_device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, entry.data[CONF_TENANT_ID])},
         manufacturer="KarrosTech",
         model="Parent Portal Lite",
         name=entry.data[CONF_TENANT_NAME],
     )
+    coordinator.via_device_id = district_device.id
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

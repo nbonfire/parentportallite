@@ -13,16 +13,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-
-try:
-    from homeassistant.helpers.entity import AddEntities
-except ImportError:  # HA <= 2024.11
-    from homeassistant.helpers.entity_platform import (
-        AddEntitiesCallback as AddEntities,
-    )
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
+import datetime as _dd
 
-from .const import CONF_TENANT_ID, DOMAIN
+from .const import DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
 
 KIND_LABELS = {
@@ -33,7 +28,7 @@ KIND_LABELS = {
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntities
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     coordinator: EdulogDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
@@ -73,12 +68,14 @@ class EdulogBusSensor(SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.vehicle["vehicleId"])},
-            name=self.vehicle["name"],
-            manufacturer="KarrosTech",
-            via_device=(DOMAIN, self.coordinator.config_entry.data[CONF_TENANT_ID]),
-        )
+        info: DeviceInfo = {
+            "identifiers": {(DOMAIN, self.vehicle["vehicleId"])},
+            "name": self.vehicle["name"],
+            "manufacturer": "KarrosTech",
+        }
+        if self.coordinator.via_device_id:
+            info["via_device_id"] = self.coordinator.via_device_id
+        return info
 
     @property
     def available(self) -> bool:
@@ -99,7 +96,9 @@ class EdulogBusSensor(SensorEntity):
         if self.kind == "gps_last_update":
             if rec["last_update"] is None:
                 return None
-            return dt_util.from_timestamp(rec["last_update"] / 1000)
+            return dt_util.as_local(
+                _dd.datetime.fromtimestamp(rec["last_update"] / 1000, tz=_dd.timezone.utc)
+            )
         return rec["bearing"]
 
     @property

@@ -24,7 +24,7 @@ subscribed to, and the buses your account has followed.
 
 ## Home Assistant (HACS) install
 
-Requires HA ≥ 2024.10. No extra Python packages (uses stdlib + `requests`,
+Requires HA ≥ 2026.1. No extra Python packages (uses stdlib + `requests`,
 both already in HA core).
 
 1. HACS → ⋮ menu → **Custom repositories** → add this repository's URL

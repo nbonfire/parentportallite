@@ -96,7 +96,7 @@ class EdulogConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 return await self.async_step_district()
 
-        return self._async_show_form(USER_SCHEMA, errors)
+        return await self._async_show_form(USER_SCHEMA, errors)
 
     async def _async_show_form(
         self, data_schema: vol.Schema, errors: dict[str, str]
@@ -140,7 +140,11 @@ class EdulogConfigFlow(ConfigFlow, domain=DOMAIN):
                     name = district.get("tenantDisplayName") or district.get(
                         "tenantName"
                     ) or tenant_id
-                    self.unique_id = f"{self._client.email}:{tenant_id}"
+                    existing = await self.async_set_unique_id(
+                        f"{self._client.email}:{tenant_id}"
+                    )
+                    if existing:
+                        self._abort_if_unique_id_configured()
                     return self.async_create_entry(
                         title=name,
                         data={
@@ -197,7 +201,6 @@ class EdulogConfigFlow(ConfigFlow, domain=DOMAIN):
                     selector.SelectSelectorConfig(
                         options=options,
                         mode=selector.SelectSelectorMode.LIST,
-                        placeholder="Choose your school district",
                     )
                 ),
             }

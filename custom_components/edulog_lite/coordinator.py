@@ -72,6 +72,9 @@ class EdulogDataUpdateCoordinator(DataUpdateCoordinator):
         self.client = client
         self.vehicles: dict[str, dict[str, Any]] = {}
         self._vehicle_sync_at = 0.0
+        #: id of the district "hub" device; set by __init__.py after it is
+        #: registered, used by the platforms' via_device_id.
+        self.via_device_id: str | None = None
 
     # ------------------------------------------------------------------ #
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
