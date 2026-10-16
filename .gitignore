@@ -1,0 +1,14 @@
+# account credentials & cached tokens (never commit)
+.env
+.bus_client_cache.json
+
+# venv
+.venv/
+
+# reverse-engineering scratch
+src/
+*.log
+*.strings
+jadx*
+/test
+__pycache__/
