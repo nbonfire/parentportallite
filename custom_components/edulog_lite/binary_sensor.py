@@ -15,6 +15,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
@@ -30,19 +31,23 @@ async def async_setup_entry(
     )
 
 
-class EdulogBusNearSensor(BinarySensorEntity):
-    """Turns on when the bus is within the arrival threshold."""
+class EdulogBusNearSensor(CoordinatorEntity, BinarySensorEntity):
+    """Turns on when the bus is within the arrival threshold.
+
+    Subclasses CoordinatorEntity so HA re-renders the state on every
+    coordinator refresh — a plain BinarySensorEntity holding `coordinator`
+    only would stay frozen after the initial add.
+    """
 
     _attr_has_entity_name = True
     _attr_name = "Arriving"
-    _attr_should_poll = False
 
     def __init__(
         self,
         coordinator: EdulogDataUpdateCoordinator,
         vehicle: dict[str, Any],
     ) -> None:
-        self.coordinator = coordinator
+        CoordinatorEntity.__init__(self, coordinator)
         self.vehicle = vehicle
         self._attr_unique_id = f"{coordinator.config_entry.unique_id}/{vehicle['vehicleId']}/near"
 
@@ -56,10 +61,6 @@ class EdulogBusNearSensor(BinarySensorEntity):
         if self.coordinator.via_device_id:
             info["via_device_id"] = self.coordinator.via_device_id
         return info
-
-    @property
-    def available(self) -> bool:
-        return self.coordinator.last_update_success
 
     @property
     def state(self) -> bool | None:

@@ -14,6 +14,7 @@ from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 import datetime as _dd
 
@@ -38,11 +39,15 @@ async def async_setup_entry(
     )
 
 
-class EdulogBusSensor(SensorEntity):
-    """One attribute (distance / GPS fix time / bearing) of one followed bus."""
+class EdulogBusSensor(CoordinatorEntity, SensorEntity):
+    """One attribute (distance / GPS fix time / bearing) of one followed bus.
+
+    Subclasses CoordinatorEntity so HA re-renders the state on every
+    coordinator refresh — a plain SensorEntity holding `coordinator`
+    only would stay frozen after the initial add.
+    """
 
     _attr_has_entity_name = True
-    _attr_should_poll = False
 
     def __init__(
         self,
@@ -50,7 +55,7 @@ class EdulogBusSensor(SensorEntity):
         vehicle: dict[str, Any],
         kind: str,
     ) -> None:
-        self.coordinator = coordinator
+        CoordinatorEntity.__init__(self, coordinator)
         self.vehicle = vehicle
         self.kind = kind
         self._attr_name = KIND_LABELS[kind]
@@ -76,10 +81,6 @@ class EdulogBusSensor(SensorEntity):
         if self.coordinator.via_device_id:
             info["via_device_id"] = self.coordinator.via_device_id
         return info
-
-    @property
-    def available(self) -> bool:
-        return self.coordinator.last_update_success
 
     def _rec(self) -> dict[str, Any] | None:
         if self.coordinator.data is None:

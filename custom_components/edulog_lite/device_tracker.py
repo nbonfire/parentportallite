@@ -22,6 +22,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import EdulogDataUpdateCoordinator
@@ -37,19 +38,23 @@ async def async_setup_entry(
     )
 
 
-class EdulogBusTracker(TrackerEntity):
-    """Live GPS position of one followed bus."""
+class EdulogBusTracker(CoordinatorEntity, TrackerEntity):
+    """Live GPS position of one followed bus.
+
+    Subclasses CoordinatorEntity so HA re-renders the position on every
+    coordinator refresh — a plain TrackerEntity holding `coordinator`
+    only would stay frozen after the initial add.
+    """
 
     _attr_has_entity_name = True
     _attr_name = "GPS"
-    _attr_should_poll = False
 
     def __init__(
         self,
         coordinator: EdulogDataUpdateCoordinator,
         vehicle: dict[str, Any],
     ) -> None:
-        self.coordinator = coordinator
+        CoordinatorEntity.__init__(self, coordinator)
         self.vehicle = vehicle
         self._attr_unique_id = (
             f"{coordinator.config_entry.unique_id}/{vehicle['vehicleId']}/gps"
@@ -80,10 +85,6 @@ class EdulogBusTracker(TrackerEntity):
     def longitude(self) -> float | None:
         rec = self._rec()
         return rec["longitude"] if rec else None
-
-    @property
-    def available(self) -> bool:
-        return self.coordinator.last_update_success
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
